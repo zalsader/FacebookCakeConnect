@@ -69,7 +69,7 @@ class FaceController extends AppController {
 			$title_for_layout = Inflector::humanize($path[$count - 1]);
 		}
 		$this->token = FB::getAccessToken();
-		$loginURL = FB::getLoginUrl(array('scope'=>'publish_actions, email, manage_pages, publish_pages'));
+		$loginURL = FB::getLoginUrl(array('scope'=>'publish_actions, email, manage_pages, publish_pages, user_photos'));
 		$this->set(compact('page', 'subpage', 'title_for_layout', 'loginURL'));
 		try {
 			$this->render(implode('/', $path));
@@ -81,22 +81,42 @@ class FaceController extends AppController {
 		}
 	}
 	public function post() {
+		$photo = $this->data['image'];
+		$caption = $this->data['caption'];
+		FB::setFileUploadSupport(true);
 		FB::setAccessToken($this->token);
-		$resp = FB::api('/me/feed', 'POST', array(
-		'link' => 'www.example.com',
-		'message' => 'User provided message'
+		$albums = FB::api('/me/albums', 'GET');
+		$albumId = 'me';
+		foreach ($albums['data'] as $album) {
+			if ($album['type']=='wall') {
+				$albumId = $album['id'];
+			}
+		}
+		$resp = FB::api("/$albumId/photos", 'POST', array(
+			'image' => '@'.realpath($photo['tmp_name']),
+			'caption' => $caption,
 		));
 		$this->redirect('/');
 	}
 	public function page() {
+		$photo = $this->data['image'];
+		$caption = $this->data['caption'];
+		FB::setFileUploadSupport(true);
 		FB::setAccessToken($this->token);
 		$response = FB::api('/me/accounts', 'GET');
 		if ($response['data']) {
 			foreach ($response['data'] as $page) {
 				FB::setAccessToken($page['access_token']);
-				FB::api('/'.$page['id'].'/feed', 'POST', array(
-					'link' => 'www.example.com',
-					'message' => 'User provided message'
+				$albums = FB::api('/'.$page['id'].'/albums', 'GET');
+				$albumId = $page['access_token'];
+				foreach ($albums['data'] as $album) {
+					if ($album['type']=='wall') {
+						$albumId = $album['id'];
+					}
+				}
+				$resp = FB::api("/$albumId/photos", 'POST', array(
+					'image' => '@'.realpath($photo['tmp_name']),
+					'caption' => $caption,
 				));
 			}
 		}
