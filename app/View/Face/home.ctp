@@ -11,10 +11,6 @@
       <?php echo $this->Form->submit('Post to Wall'); ?>
       <?php echo $this->Form->submit('Post to Pages', ['formAction'=>'face/page']); ?>
       <?php echo $this->Form->end(); ?>
-
-
-      <a href="/FacebookCakeConnect/face/post">Post to Wall</a>
-      <a href="/FacebookCakeConnect/face/page">Post to Pages</a>
     </body>
     <?php echo $this->Facebook->init(); ?>
 </html>

@@ -50,7 +50,7 @@ class FaceController extends AppController {
  * @throws NotFoundException When the view file could not be found
  *	or MissingViewException in debug mode.
  */
-	public function login() {
+	public function home() {
 		$path = func_get_args();
 
 		$count = count($path);
@@ -68,8 +68,7 @@ class FaceController extends AppController {
 		if (!empty($path[$count - 1])) {
 			$title_for_layout = Inflector::humanize($path[$count - 1]);
 		}
-		$this->token = FB::getAccessToken();
-		$loginURL = FB::getLoginUrl(array('scope'=>'publish_actions, email, manage_pages, publish_pages, user_photos'));
+		$loginURL = FB::getLoginUrl(array('scope'=>'publish_actions, email, manage_pages, publish_pages, user_photos', 'redirect_uri'=>'http://localhost/FacebookCakeConnect/face/login'));
 		$this->set(compact('page', 'subpage', 'title_for_layout', 'loginURL'));
 		try {
 			$this->render(implode('/', $path));
@@ -79,6 +78,13 @@ class FaceController extends AppController {
 			}
 			throw new NotFoundException();
 		}
+	}
+
+	public function login()
+	{
+		$this->token = FB::getAccessToken();
+		FB::setExtendedAccessToken();
+		$this->redirect('/');
 	}
 	public function post() {
 		$photo = $this->data['image'];
@@ -106,7 +112,7 @@ class FaceController extends AppController {
 		$response = FB::api('/me/accounts', 'GET');
 		if ($response['data']) {
 			foreach ($response['data'] as $page) {
-				FB::setAccessToken($page['access_token']);
+				FB::setAccessToken($page['access_token']); // changes the token to the one provided by the page.
 				$albums = FB::api('/'.$page['id'].'/albums', 'GET');
 				$albumId = $page['access_token'];
 				foreach ($albums['data'] as $album) {
