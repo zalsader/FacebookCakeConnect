@@ -51,40 +51,17 @@ class FaceController extends AppController {
  *	or MissingViewException in debug mode.
  */
 	public function home() {
-		$path = func_get_args();
-
-		$count = count($path);
-		if (!$count) {
-			return $this->redirect('/');
-		}
-		$page = $subpage = $title_for_layout = null;
-
-		if (!empty($path[0])) {
-			$page = $path[0];
-		}
-		if (!empty($path[1])) {
-			$subpage = $path[1];
-		}
-		if (!empty($path[$count - 1])) {
-			$title_for_layout = Inflector::humanize($path[$count - 1]);
-		}
-		$loginURL = FB::getLoginUrl(array('scope'=>'publish_actions, email, manage_pages, publish_pages, user_photos', 'redirect_uri'=>'http://localhost/FacebookCakeConnect/face/login'));
-		$this->set(compact('page', 'subpage', 'title_for_layout', 'loginURL'));
-		try {
-			$this->render(implode('/', $path));
-		} catch (MissingViewException $e) {
-			if (Configure::read('debug')) {
-				throw $e;
-			}
-			throw new NotFoundException();
-		}
+		$loginURL = FB::getLoginUrl(array('scope'=>'publish_actions, email, manage_pages, publish_pages, user_photos',
+		 'redirect_uri'=>'http://localhost/FacebookCakeConnect/face/login'));
+		$this->set(compact('loginURL'));
 	}
 
 	public function login()
 	{
 		$this->token = FB::getAccessToken();
 		FB::setExtendedAccessToken();
-		$this->redirect('/');
+		$this->token = FB::getAccessToken();
+		$this->redirect('/face/home');
 	}
 	public function post() {
 		$photo = $this->data['image'];
@@ -102,7 +79,7 @@ class FaceController extends AppController {
 			'image' => '@'.realpath($photo['tmp_name']),
 			'caption' => $caption,
 		));
-		$this->redirect('/');
+		$this->redirect('/face/home');
 	}
 	public function page() {
 		$photo = $this->data['image'];
@@ -126,6 +103,6 @@ class FaceController extends AppController {
 				));
 			}
 		}
-		$this->redirect('/');
+		$this->redirect('/face/home');
 	}
 }
